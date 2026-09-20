@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily KPI Check PDF Generator</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Libraries (local copies — no internet required) -->
+  <script src="libs/papaparse.min.js"></script>
+  <script src="libs/jspdf.umd.min.js"></script>
+  <script src="libs/jspdf.plugin.autotable.min.js"></script>
+  <script src="libs/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <h1 class="header-title">Daily KPI Check PDF Generator</h1>
+        <p class="header-subtitle">Professional Network Operations Report Builder</p>
+      </div>
+    </div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+</header>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<main class="app-main">
+
+  <!-- LEFT PANEL: Controls -->
+  <aside class="panel-left">
+
+    <!-- Step 1: Report Info -->
+    <section class="card" id="cardReportInfo">
+      <div class="card-header">
+        <span class="step-badge">1</span>
+        <h2>Report Information</h2>
+      </div>
+      <div class="card-body">
+        <label class="field-label">Report Date</label>
+        <input type="date" id="reportDate" class="field-input" />
+
+        <label class="field-label">Report Title</label>
+        <input type="text" id="reportTitle" class="field-input" value="Daily KPI Check Report" />
+
+        <label class="field-label">Prepared By</label>
+        <input type="text" id="preparedBy" class="field-input" placeholder="e.g. NOC Team" />
+
+        <label class="field-label">Network / Region</label>
+        <input type="text" id="networkRegion" class="field-input" placeholder="e.g. Core Network" />
+      </div>
+    </section>
+
+    <!-- Step 2: CSV Upload -->
+    <section class="card" id="cardCsvUpload">
+      <div class="card-header">
+        <span class="step-badge">2</span>
+        <h2>Upload Alarm CSV</h2>
+      </div>
+      <div class="card-body">
+        <div class="upload-zone" id="csvDropZone">
+          <div class="upload-icon">📄</div>
+          <p class="upload-text">Drag &amp; drop <strong>data.csv</strong> here</p>
+          <p class="upload-sub">or click to browse</p>
+          <input type="file" id="csvFileInput" accept=".csv" hidden />
+        </div>
+        <div class="upload-status" id="csvStatus" hidden>
+          <div class="status-icon success">✓</div>
+          <div class="status-detail">
+            <strong id="csvFileName"></strong>
+            <span id="csvRowCount"></span>
+          </div>
+          <button class="btn-clear" id="csvClear" title="Remove">✕</button>
+        </div>
+
+        <!-- Filter summary -->
+        <div class="filter-summary" id="filterSummary" hidden>
+          <div class="filter-row">
+            <span>Total alarms</span>
+            <strong id="statTotal">0</strong>
+          </div>
+          <div class="filter-row excluded">
+            <span>Excluded (filtered)</span>
+            <strong id="statExcluded">0</strong>
+          </div>
+          <div class="filter-row included">
+            <span>Included alarms</span>
+            <strong id="statIncluded">0</strong>
+          </div>
+          <div class="filter-row sources">
+            <span>Alarm Sources</span>
+            <strong id="statSources">0</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: KPI Images -->
+    <section class="card" id="cardKpiImages">
+      <div class="card-header">
+        <span class="step-badge">3</span>
+        <h2>Upload KPI Images</h2>
+      </div>
+      <div class="card-body">
+        <div class="upload-zone small" id="imgDropZone">
+          <div class="upload-icon">🖼️</div>
+          <p class="upload-text">Drag &amp; drop KPI screenshots</p>
+          <p class="upload-sub">PNG, JPG, JPEG supported · multiple files</p>
+          <input type="file" id="imgFileInput" accept="image/*" multiple hidden />
+        </div>
+
+        <div class="kpi-image-list" id="kpiImageList"></div>
+      </div>
+    </section>
+
+    <!-- Step 4: KPI Manual Data -->
+    <section class="card" id="cardKpiData">
+      <div class="card-header">
+        <span class="step-badge">4</span>
+        <h2>KPI Data Entries</h2>
+        <button class="btn-icon" id="addKpiEntry" title="Add KPI entry">＋</button>
+      </div>
+      <div class="card-body">
+        <p class="hint-text">Add manual KPI metrics to include in the report.</p>
+        <div class="kpi-entries" id="kpiEntries"></div>
+      </div>
+    </section>
+
+    <!-- Step 5: Issues -->
+    <section class="card" id="cardIssues">
+      <div class="card-header">
+        <span class="step-badge">5</span>
+        <h2>Issues / Observations</h2>
+        <button class="btn-icon" id="addIssue" title="Add issue">＋</button>
+      </div>
+      <div class="card-body">
+        <div class="issue-entries" id="issueEntries"></div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="card card-actions">
+      <div class="card-body action-buttons">
+        <button class="btn btn-preview" id="btnPreview">
+          <span>👁</span> Preview Report
+        </button>
+        <button class="btn btn-generate" id="btnGenerate" disabled>
+          <span>⚙️</span> Generate PDF
+        </button>
+        <button class="btn btn-download" id="btnDownload" disabled>
+          <span>⬇️</span> Download PDF
+        </button>
+        <button class="btn btn-word" id="btnDownloadWord" disabled>
+          <span>📄</span> Download Word
+        </button>
+      </div>
+    </section>
+
+  </aside>
+
+  <!-- RIGHT PANEL: Preview -->
+  <section class="panel-right">
+    <div class="preview-header">
+      <h2>Report Preview</h2>
+      <div class="preview-meta" id="previewMeta"></div>
+    </div>
+    <div class="preview-body" id="previewBody">
+      <div class="preview-placeholder">
+        <div class="placeholder-icon">📋</div>
+        <p>Upload a CSV file and click <strong>Preview Report</strong> to see the report here.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="loadingOverlay" hidden>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <p id="loadingMsg">Generating PDF…</p>
+    <p class="loading-sub" id="loadingSub"></p>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="libs/jszip.min.js"></script>
+<script src="js/constants.js?v=4"></script>
+<script src="js/csvParser.js?v=4"></script>
+<script src="js/alarmFilter.js?v=4"></script>
+<script src="js/kpiManager.js?v=4"></script>
+<script src="js/previewRenderer.js?v=4"></script>
+<script src="js/pdfGenerator.js?v=4"></script>
+<script src="js/wordGenerator.js?v=1"></script>
+<script src="js/app.js?v=5"></script>
+<script src="js/copyTable.js?v=4"></script>
+
+</body>
+</html>

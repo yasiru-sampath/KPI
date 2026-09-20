@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily NCE Datacom Report</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── NCE Datacom cover diamonds (cyan/white squares) ── */
+    .nce-datacom-cover {
+      background: linear-gradient(160deg, #0f2870 0%, #0a1948 55%, #071230 100%);
+      min-height: 420px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .nce-cover-diamonds {
+      position: absolute;
+      top: 0; right: 0;
+      width: 45%; height: 100%;
+    }
+    .nce-diam {
+      position: absolute;
+      transform: rotate(45deg);
+      border-radius: 3px;
+    }
+    .nd1 { width: 56px; height: 56px; right: 12px;  top: 10px;  background: rgba(255,255,255,.9); }
+    .nd2 { width: 72px; height: 72px; right: 28px;  top: 65px;  background: rgba(80,190,255,.85); }
+    .nd3 { width: 88px; height: 88px; right: 10px;  top: 135px; background: rgba(40,140,220,.75); }
+    .nd4 { width: 76px; height: 76px; right: 32px;  top: 215px; background: rgba(60,170,240,.7);  }
+    .nd5 { width: 52px; height: 52px; right: 14px;  top: 285px; background: rgba(130,220,255,.6); }
+    .nd6 { width: 40px; height: 40px; right: 40px;  top: 330px; background: rgba(80,160,220,.65); }
+
+    /* ── Link heading in preview (bold black, matching PDF) ── */
+    .nce-link-heading {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #000;
+      padding: 6px 0 4px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Topology status badge ── */
+    .topo-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--success-bg);
+      border: 1px solid #b2dfcc;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+    .topo-status .topo-name {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    /* ── Alarm status ── */
+    .alarm-info-bar {
+      background: var(--brand-light);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: .78rem;
+      color: var(--text-muted);
+    }
+    .alarm-info-bar strong { color: var(--text); }
+
+    /* ── Nav tabs ── */
+    .header-nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .nav-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: rgba(255,255,255,.75);
+      border: 1px solid rgba(255,255,255,.25);
+      transition: background .2s, color .2s;
+      white-space: nowrap;
+    }
+    .nav-tab:hover  { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-tab.active { background: rgba(255,255,255,.22); color: #fff; border-color: rgba(255,255,255,.6); }
+
+    /* ── Section sub-label ── */
+    .section-sublabel {
+      font-size: .72rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-logo">
+      <div class="logo-icon">📡</div>
+      <div>
+        <h1 class="header-title">Daily NCE Datacom Report</h1>
+        <p class="header-subtitle">Network Core Element — Datacom Report Builder</p>
+      </div>
+    </div>
+    <nav class="header-nav">
+      <a href="index.html"         class="nav-tab">🔔 Alarm KPI Check</a>
+      <a href="daily-nce-kpi.html" class="nav-tab active">📡 NCE Datacom</a>
+    </nav>
+    <div class="header-date" id="nceHeaderDate"></div>
+  </div>
+</header>
+
+<!-- ===== MAIN LAYOUT ===== -->
+<main class="app-main">
+
+  <!-- LEFT PANEL -->
+  <aside class="panel-left">
+
+    <!-- Step 1: Report Info -->
+    <section class="card" id="nceCardReportInfo">
+      <div class="card-header">
+        <span class="step-badge">1</span>
+        <h2>Report Information</h2>
+      </div>
+      <div class="card-body">
+        <label class="field-label">Report Date</label>
+        <input type="date" id="nceReportDate" class="field-input" />
+
+        <label class="field-label">Report Title</label>
+        <input type="text" id="nceReportTitle" class="field-input"
+               value="Daily NCE Datacom report" />
+
+        <label class="field-label">Prepared By</label>
+        <input type="text" id="ncePreparedBy" class="field-input"
+               placeholder="e.g. NOC Team" />
+
+        <label class="field-label">Network / Region</label>
+        <input type="text" id="nceNetworkRegion" class="field-input"
+               placeholder="e.g. Core Network" />
+      </div>
+    </section>
+
+    <!-- Step 2: Topology Diagram -->
+    <section class="card" id="nceCardTopo">
+      <div class="card-header">
+        <span class="step-badge">2</span>
+        <h2>Network Topology Diagram</h2>
+      </div>
+      <div class="card-body">
+        <p class="section-sublabel">Upload the fixed network topology diagram image (PNG/JPG).</p>
+        <div class="upload-zone small" id="nceTopoDropZone">
+          <div class="upload-icon">🗺️</div>
+          <p class="upload-text">Drag &amp; drop topology image</p>
+          <p class="upload-sub">PNG, JPG supported</p>
+          <input type="file" id="nceTopoFileInput" accept="image/*" hidden />
+        </div>
+        <div class="topo-status" id="nceTopoStatus" hidden>
+          <span style="font-size:1.2rem;color:var(--success)">✓</span>
+          <span class="topo-name" id="nceTopoName"></span>
+          <button class="btn-clear" id="nceTopoClear" title="Remove">✕</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Link KPI Graphs -->
+    <section class="card" id="nceCardGraphs">
+      <div class="card-header">
+        <span class="step-badge">3</span>
+        <h2>Link KPI Graphs</h2>
+      </div>
+      <div class="card-body">
+        <p class="section-sublabel">
+          Upload one screenshot per network link. Each graph gets its own PDF page.
+          Drag cards to reorder.
+        </p>
+        <div class="upload-zone small" id="nceGraphDropZone">
+          <div class="upload-icon">📊</div>
+          <p class="upload-text">Drag &amp; drop bandwidth graphs</p>
+          <p class="upload-sub">PNG, JPG · multiple files supported</p>
+          <input type="file" id="nceGraphFileInput" accept="image/*" multiple hidden />
+        </div>
+        <div class="kpi-image-list mt-8" id="nceGraphList"></div>
+      </div>
+    </section>
+
+    <!-- Step 4: Alarm CSV -->
+    <section class="card" id="nceCardAlarms">
+      <div class="card-header">
+        <span class="step-badge">4</span>
+        <h2>Alarm Data (CSV)</h2>
+      </div>
+      <div class="card-body">
+        <p class="section-sublabel">
+          Upload a CSV with columns: Device, Severity, Name, Location Info,
+          Last Occurred, Clearance Status.<br>
+          Rows are split automatically into Uncleared and Cleared sections.
+        </p>
+        <div class="upload-zone small" id="nceAlarmDropZone">
+          <div class="upload-icon">🔔</div>
+          <p class="upload-text">Drag &amp; drop alarm CSV</p>
+          <p class="upload-sub">.csv or .tsv supported</p>
+          <input type="file" id="nceAlarmFileInput" accept=".csv,.tsv,.txt" hidden />
+        </div>
+        <div class="upload-status" id="nceAlarmStatus" hidden style="margin-top:8px">
+          <div class="status-icon success">✓</div>
+          <div class="status-detail">
+            <strong id="nceAlarmFileName"></strong>
+            <span id="nceAlarmRowCount"></span>
+          </div>
+          <button class="btn-clear" id="nceAlarmClear" title="Remove">✕</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="card card-actions">
+      <div class="card-body action-buttons">
+        <button class="btn btn-preview" id="nceBtnPreview">
+          <span>👁</span> Preview Report
+        </button>
+        <button class="btn btn-generate" id="nceBtnGenerate">
+          <span>⚙️</span> Generate PDF
+        </button>
+        <button class="btn btn-download" id="nceBtnDownload" disabled>
+          <span>⬇️</span> Download PDF
+        </button>
+      </div>
+    </section>
+
+  </aside>
+
+  <!-- RIGHT PANEL: Preview -->
+  <section class="panel-right">
+    <div class="preview-header">
+      <h2>NCE Datacom Report Preview</h2>
+      <div class="preview-meta" id="ncePreviewMeta"></div>
+    </div>
+    <div class="preview-body" id="ncePreviewBody">
+      <div class="preview-placeholder">
+        <div class="placeholder-icon">📡</div>
+        <p>Upload a topology diagram, link graphs, or alarm CSV — then click
+           <strong>Preview Report</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== LOADING OVERLAY ===== -->
+<div class="loading-overlay" id="nceLoadingOverlay" hidden>
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <p id="nceLoadingMsg">Generating PDF…</p>
+    <p class="loading-sub" id="nceLoadingSub"></p>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast-container" id="nceToastContainer"></div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="libs/jspdf.umd.min.js"></script>
+<script src="libs/jspdf.plugin.autotable.min.js"></script>
+
+<script src="js/nceKpiManager.js?v=2"></script>
+<script src="js/ncePreviewRenderer.js?v=2"></script>
+<script src="js/ncePdfGenerator.js?v=2"></script>
+<script src="js/nceApp.js?v=2"></script>
+
+</body>
+</html>
